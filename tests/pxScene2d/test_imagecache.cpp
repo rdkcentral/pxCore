@@ -16,6 +16,21 @@ limitations under the License.
 
 */
 
+/**
+
+Copyright 2021 Comcast Cable Communications Management, LLC
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+SPDX-License-Identifier: Apache-2.0
+*/
+
 #include <list>
 #include <sstream>
 
@@ -998,7 +1013,7 @@ class rtFileDownloaderTest : public testing::Test, public commonTestFns
       rtFileCache::instance()->clearCache();
       rtFileDownloadRequest* request = new rtFileDownloadRequest("https://www.sparkui.org/tests-ci/tests/images/008.jpg",this);
       request->setCallbackFunction(rtFileDownloaderTest::downloadCallbackForUseCallbackDataSize);
-      request->setDownloadProgressCallbackFunction(rtFileDownloaderTest::downloadProgressCallbackForUseCallbackDataSize, this);
+      request->setExternalWriteCallback(rtFileDownloaderTest::downloadProgressCallbackForUseCallbackDataSize, this);
       request->setUseCallbackDataSize(true);
       rtFileDownloader::instance()->downloadFile(request);
       sem_wait(testSem);
@@ -1253,29 +1268,30 @@ class rtFileDownloaderTest : public testing::Test, public commonTestFns
     }
 
     // download progress test begins
-    void setDownloadProgressCallbackFunctionTest()
+    void setExternalWriteCallbackTest()
     {
       rtFileCache::instance()->clearCache();
       rtFileDownloadRequest request("https://www.sparkui.org/tests-ci/tests/images/008.jpg",this);
-      request.setDownloadProgressCallbackFunction(rtFileDownloaderTest::downloadProgressCallback, this);
+      request.setExternalWriteCallback(rtFileDownloaderTest::downloadProgressCallback, this);
+      request.setProgressCallback(rtFileDownloaderTest::progressCallback, this);
       EXPECT_TRUE (request.mDownloadProgressCallbackFunction == &rtFileDownloaderTest::downloadProgressCallback);
       EXPECT_TRUE (request.mDownloadProgressUserPtr == this);
     }
 
-    void executeDownloadProgressCallbackPresentTest()
+    void executeExternalWriteCallbackPresentTest()
     {
       size_t size = 0, nmemb = 0;
       rtFileCache::instance()->clearCache();
       rtFileDownloadRequest request("https://www.sparkui.org/tests-ci/tests/images/008.jpg",this);
-      request.setDownloadProgressCallbackFunction(rtFileDownloaderTest::downloadProgressCallback, this);
-      EXPECT_TRUE ((size * nmemb) == request.executeDownloadProgressCallback(NULL, size, nmemb));
+      request.setExternalWriteCallback(rtFileDownloaderTest::downloadProgressCallback, this);
+      EXPECT_TRUE ((size * nmemb) == request.executeExternalWriteCallback(NULL, size, nmemb));
     }
 
-    void executeDownloadProgressCallbackAbsentTest()
+    void executeExternalWriteCallbackAbsentTest()
     {
       rtFileCache::instance()->clearCache();
       rtFileDownloadRequest request("https://www.sparkui.org/tests-ci/tests/images/008.jpg",this);
-      EXPECT_TRUE (false == request.executeDownloadProgressCallback(NULL, 0, 0));
+      EXPECT_TRUE (false == request.executeExternalWriteCallback(NULL, 0, 0));
     }
 
     void setDataIsCachedTest()
@@ -1374,6 +1390,13 @@ class rtFileDownloaderTest : public testing::Test, public commonTestFns
       return 0;
     }
 
+    static size_t progressCallback(void* ptr, double dltotal, double dlnow, double ultotal, double ulnow)
+    {
+       int rc= 0;
+
+       return rc;
+    }
+
   private:
     int expectedStatusCode;
     int expectedHttpCode;
@@ -1416,9 +1439,9 @@ TEST_F(rtFileDownloaderTest, checkCacheTests)
   setHTTPFailOnErrorTest();
   setHTTPErrorTest();
   setCurlDefaultTimeoutTest();
-  setDownloadProgressCallbackFunctionTest();
-  executeDownloadProgressCallbackPresentTest();
-  executeDownloadProgressCallbackAbsentTest();
+  setExternalWriteCallbackTest();
+  executeExternalWriteCallbackPresentTest();
+  executeExternalWriteCallbackAbsentTest();
   setDataIsCachedTest();
   clearFileCacheTest();
 }
