@@ -1,3 +1,17 @@
+/**
+Copyright 2021 Comcast Cable Communications Management, LLC
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+SPDX-License-Identifier: Apache-2.0
+*/
+
 /*
 
  pxCore Copyright 2005-2018 John Robinson
@@ -108,7 +122,7 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
   size_t downloadCallbackSize = 0;
   struct MemoryStruct *mem = (struct MemoryStruct *)userp;
 
-  downloadCallbackSize = mem->downloadRequest->executeDownloadProgressCallback(contents, size, nmemb );
+  downloadCallbackSize = mem->downloadRequest->executeExternalWriteCallback(contents, size, nmemb );
 
   mem->contentsBuffer = (char*)realloc(mem->contentsBuffer, mem->contentsSize + downloadSize + 1);
   if(mem->contentsBuffer == NULL) {
@@ -181,8 +195,8 @@ void onDownloadHandleCheck()
 
 rtFileDownloadRequest::rtFileDownloadRequest(const char* imageUrl, void* callbackData, void (*callbackFunction)(rtFileDownloadRequest*))
       : mTag(), mFileUrl(imageUrl), mProxyServer(),
-    mErrorString(), mHttpStatusCode(0), mCallbackFunction(callbackFunction), mDownloadProgressCallbackFunction(NULL), mDownloadProgressUserPtr(NULL),
-    mDownloadedData(0), mDownloadedDataSize(), mDownloadStatusCode(0) ,mCallbackData(callbackData),
+    mErrorString(), mHttpStatusCode(0), mCallbackFunction(callbackFunction), mExternalWriteCallback(NULL), mExternalWriteCallbackUserPtr(NULL),
+    mProgressCallback(NULL), mProgressCallbackUserPtr(NULL), mDownloadedData(0), mDownloadedDataSize(), mDownloadStatusCode(0) ,mCallbackData(callbackData),
     mCallbackFunctionMutex(), mHeaderData(0), mHeaderDataSize(0), mHeaderOnly(false), mDownloadHandleExpiresTime(-2)
 #ifdef ENABLE_HTTP_CACHE
     , mCacheEnabled(true), mDeferCacheRead(false), mCachedFileReadSize(0)
@@ -261,10 +275,26 @@ void rtFileDownloadRequest::setCallbackFunction(void (*callbackFunction)(rtFileD
   mCallbackFunction = callbackFunction;
 }
 
-void rtFileDownloadRequest::setDownloadProgressCallbackFunction(size_t (*callbackFunction)(void *ptr, size_t size, size_t nmemb, void *userData), void *userPtr)
+void rtFileDownloadRequest::setExternalWriteCallback(size_t (*callbackFunction)(void *ptr, size_t size, size_t nmemb, void *userData), void *userPtr)
 {
-  mDownloadProgressCallbackFunction = callbackFunction;
-  mDownloadProgressUserPtr = userPtr;
+  mExternalWriteCallback = callbackFunction;
+  mExternalWriteCallbackUserPtr = userPtr;
+}
+
+void rtFileDownloadRequest::setProgressCallback(int (*callbackFunction)(void* ptr, double dltotal, double dlnow, double ultotal, double ulnow), void *userPtr)
+{
+  mProgressCallback = callbackFunction;
+  mProgressCallbackUserPtr = userPtr;
+}
+
+void* rtFileDownloadRequest::progressCallback(void)
+{
+  return mProgressCallback;
+}
+
+void* rtFileDownloadRequest::progressCallbackUserPtr(void)
+{
+  return mProgressCallbackUserPtr;
 }
 
 void rtFileDownloadRequest::setCallbackFunctionThreadSafe(void (*callbackFunction)(rtFileDownloadRequest*))
@@ -298,11 +328,11 @@ bool rtFileDownloadRequest::executeCallback(int statusCode)
   return false;
 }
 
-size_t rtFileDownloadRequest::executeDownloadProgressCallback(void * ptr, size_t size, size_t nmemb)
+size_t rtFileDownloadRequest::executeExternalWriteCallback(void * ptr, size_t size, size_t nmemb)
 {
-  if(mDownloadProgressCallbackFunction)
+  if(mExternalWriteCallback)
   {
-    return mDownloadProgressCallbackFunction(ptr, size, nmemb, mDownloadProgressUserPtr);
+    return mExternalWriteCallback(ptr, size, nmemb, mExternalWriteCallbackUserPtr);
   }
   return 0;
 }
@@ -889,7 +919,7 @@ void rtFileDownloader::downloadFileAsByteRange(rtFileDownloadRequest* downloadRe
                     memset(buffer, 0, downloadRequest->getCachedFileReadSize());
                     bytesCount = fread(buffer, 1, downloadRequest->getCachedFileReadSize(), fp);
                     dataSize += bytesCount;
-                    downloadRequest->executeDownloadProgressCallback((unsigned char*)buffer, bytesCount, 1 );
+                    downloadRequest->executeExternalWriteCallback((unsigned char*)buffer, bytesCount, 1 );
                 }
                 // For deferCacheRead, the user requires the downloadedDataSize but not the data.
                 downloadRequest->setDownloadedData( invalidData, dataSize);
@@ -1029,6 +1059,15 @@ bool rtFileDownloader::downloadByteRangeFromNetwork(rtFileDownloadRequest* downl
 
    if(downloadRequest->isProgressMeterSwitchOff())
       curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1);
+   else
+   {
+      if(downloadRequest->progressCallback())
+      {
+         curl_easy_setopt(curl_handle, CURLOPT_PROGRESSFUNCTION, downloadRequest->progressCallback());
+         curl_easy_setopt(curl_handle, CURLOPT_PROGRESSDATA, downloadRequest->progressCallbackUserPtr());
+         curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 0);
+      }
+   }
 
    if(downloadRequest->isHTTPFailOnError())
    {
@@ -1418,7 +1457,7 @@ void rtFileDownloader::downloadFile(rtFileDownloadRequest* downloadRequest)
                     memset(buffer, 0, downloadRequest->getCachedFileReadSize());
                     bytesCount = fread(buffer, 1, downloadRequest->getCachedFileReadSize(), fp);
                     dataSize += bytesCount;
-                    downloadRequest->executeDownloadProgressCallback((unsigned char*)buffer, bytesCount, 1 );
+                    downloadRequest->executeExternalWriteCallback((unsigned char*)buffer, bytesCount, 1 );
                 }
                 // For deferCacheRead, the user requires the downloadedDataSize but not the data.
                 downloadRequest->setDownloadedData( invalidData, dataSize);
@@ -1537,6 +1576,15 @@ bool rtFileDownloader::downloadFromNetwork(rtFileDownloadRequest* downloadReques
 
     if(downloadRequest->isProgressMeterSwitchOff())
         curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1);
+	else
+	{
+      if(downloadRequest->progressCallback())
+      {
+         curl_easy_setopt(curl_handle, CURLOPT_PROGRESSFUNCTION, downloadRequest->progressCallback());
+         curl_easy_setopt(curl_handle, CURLOPT_PROGRESSDATA, downloadRequest->progressCallbackUserPtr());
+         curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 0);
+      }
+   }
 
     if(downloadRequest->isHTTPFailOnError())
     {

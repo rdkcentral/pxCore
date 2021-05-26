@@ -1,3 +1,17 @@
+/**
+Copyright 2021 Comcast Cable Communications Management, LLC
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+SPDX-License-Identifier: Apache-2.0
+*/
+
 /*
 
  pxCore Copyright 2005-2018 John Robinson
@@ -60,12 +74,15 @@ public:
   void setErrorString(const char* errorString);
   rtString errorString();
   void setCallbackFunction(void (*callbackFunction)(rtFileDownloadRequest*));
-  void setDownloadProgressCallbackFunction(size_t (*callbackFunction)(void *ptr, size_t size, size_t nmemb, void *userData), void *userPtr);
+  void setExternalWriteCallback(size_t (*callbackFunction)(void *ptr, size_t size, size_t nmemb, void *userData), void *userPtr);
+  void setProgressCallback(int (*callbackFunction)(void* ptr, double dltotal, double dlnow, double ultotal, double ulnow), void *userPtr);
+  void* progressCallback(void);
+  void* progressCallbackUserPtr(void);
   void setCallbackFunctionThreadSafe(void (*callbackFunction)(rtFileDownloadRequest*));
   long httpStatusCode();
   void setHttpStatusCode(long statusCode);
   bool executeCallback(int statusCode);
-  size_t executeDownloadProgressCallback(void *ptr, size_t size, size_t nmemb);
+  size_t executeExternalWriteCallback(void *ptr, size_t size, size_t nmemb);
   void setDownloadedData(char* data, size_t size);
   void downloadedData(char*& data, size_t& size);
   char* downloadedData();
@@ -151,8 +168,10 @@ private:
   rtString mErrorString;
   long mHttpStatusCode;
   void (*mCallbackFunction)(rtFileDownloadRequest*);
-  size_t (*mDownloadProgressCallbackFunction)(void *ptr, size_t size, size_t nmemb, void *userData);
-  void *mDownloadProgressUserPtr;
+  size_t (*mExternalWriteCallback)(void *ptr, size_t size, size_t nmemb, void *userData);
+  void *mExternalWriteCallbackUserPtr;
+  int (*mProgressCallback)(void* ptr, double TotalToDownload, double NowDownloaded, double TotalToUpload, double NowUploaded);
+  void *mProgressCallbackUserPtr;
   char* mDownloadedData;
   size_t mDownloadedDataSize;
   int mDownloadStatusCode;
