@@ -202,7 +202,7 @@ rtFileDownloadRequest::rtFileDownloadRequest(const char* imageUrl, void* callbac
     , mCacheEnabled(true), mDeferCacheRead(false), mCachedFileReadSize(0)
 #endif
     , mIsDataInCache(false)
-    , mIsProgressMeterSwitchOff(false), mHTTPFailOnError(false), mDefaultTimeout(false), mConnectionTimeout(0)
+    , mIsProgressMeterSwitchOff(false), mHTTPFailOnError(false), mDefaultTimeout(0), mConnectionTimeout(0)
     , mCORS(), mCanceled(false), mUseCallbackDataSize(false), mCanceledMutex()
     , mMethod()
     , mReadData(NULL)
@@ -529,14 +529,14 @@ char* rtFileDownloadRequest::httpErrorBuffer(void)
   return mHttpErrorBuffer;
 }
 
-void rtFileDownloadRequest::setCurlDefaultTimeout(bool val)
+void rtFileDownloadRequest::setCurlDefaultTimeout(uint32_t val)
 {
   mDefaultTimeout = val;
 }
 
 bool rtFileDownloadRequest::isCurlDefaultTimeoutSet()
 {
-  return mDefaultTimeout;
+  return mDefaultTimeout>0;
 }
 
 void rtFileDownloadRequest::setConnectionTimeout(long val)
@@ -1050,6 +1050,10 @@ bool rtFileDownloader::downloadByteRangeFromNetwork(rtFileDownloadRequest* downl
    {
       curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, kCurlTimeoutInSeconds);
    }
+   else
+   {
+      curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, downloadRequest->getCurlDefaultTimeout());
+   } 
    if(downloadRequest->getConnectionTimeout() != 0)
    {
       curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, downloadRequest->getConnectionTimeout());
@@ -1059,6 +1063,7 @@ bool rtFileDownloader::downloadByteRangeFromNetwork(rtFileDownloadRequest* downl
 
    if(downloadRequest->isProgressMeterSwitchOff())
       curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1);
+
    else
    {
       if(downloadRequest->progressCallback())

@@ -10,6 +10,7 @@ option(PXCORE_ESSOS "PXCORE_ESSOS" OFF)
 option(PXCORE_MATRIX_HELPERS "PXCORE_MATRIX_HELPERS" ON)
 option(PXCORE_PERMISSIONS_CHECK "PXCORE_PERMISSIONS_CHECK" ON)
 option(BUILD_RTCORE_LIBS "BUILD_RTCORE_LIBS" ON)
+option(BUILD_RTCORE_EXT_LIBS "BUILD_RTCORE_EXT_LIBS" OFF)
 option(BUILD_PXCORE_LIBS "BUILD_PXCORE_LIBS" ON)
 option(OUTPUT_LIBS_LOCAL "OUTPUT_LIBS_LOCAL" OFF)
 option(PXCORE_REUSE_CURL_HANDLES "PXCORE_REUSE_CURL_HANDLES" ON)
@@ -225,6 +226,9 @@ set(PXCORE_FILES ${PXCORE_FILES} pxOffscreen.cpp pxWindowUtil.cpp pxColorNames.c
         rtJsonUtils.cpp
         )
 
+set(RTCORE_EXT_FILES ${RTCORE_FILES}  rtFileCache.cpp rtHttpRequest.cpp   rtHttpResponse.cpp  rtThreadQueue.cpp  unix/rtThreadPoolNative.cpp rtFileDownloader.cpp unix/rtMutexNative.cpp rtThreadTask.cpp rtHttpCache.cpp rtThreadPool.cpp rtUrlUtils.cpp
+       )
+
 if (SUPPORT_STORAGE)
     message("Adding local storage support")
     set(PXCORE_FILES ${PXCORE_FILES} rtStorage.cpp)
@@ -314,4 +318,8 @@ if (BUILD_RTCORE_LIBS)
     if (BUILD_RTCORE_SHARED_LIBRARY GREATER 0)
       add_library(rtCore SHARED ${RTCORE_FILES})
     endif(BUILD_RTCORE_SHARED_LIBRARY GREATER 0)
+endif (BUILD_RTCORE_LIBS)
+if (BUILD_RTCORE_EXT_LIBS)
+    message("Building rtcore ext libs")
+    add_library(rtCoreExt SHARED ${RTCORE_EXT_FILES})
 endif (BUILD_RTCORE_LIBS)

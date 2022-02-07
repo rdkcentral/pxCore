@@ -119,8 +119,9 @@ public:
   bool isHTTPFailOnError();
   void setHTTPError(const char* httpError);
   char* httpErrorBuffer(void);
-  void setCurlDefaultTimeout(bool val);
+  void setCurlDefaultTimeout(uint32_t val);
   bool isCurlDefaultTimeoutSet();
+  uint32_t getCurlDefaultTimeout();
   void setConnectionTimeout(long val);
   long getConnectionTimeout();
   void setCORS(const rtCORSRef& cors);
@@ -191,7 +192,7 @@ private:
   bool mIsProgressMeterSwitchOff;
   bool mHTTPFailOnError;
   char mHttpErrorBuffer[CURL_ERROR_SIZE];
-  bool mDefaultTimeout;
+  uint32_t mDefaultTimeout;
   long mConnectionTimeout;
   rtCORSRef mCORS;
   bool mCanceled;
