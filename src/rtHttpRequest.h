@@ -59,6 +59,7 @@ public:
   static void onDownloadComplete(rtFileDownloadRequest* downloadRequest);
   static void onDownloadCompleteAndRelease(rtFileDownloadRequest* downloadRequest);
   static void onDownloadComplete(void* context, void* data);
+  static int onDownloadProgressCallbackFunction(void* ptr, double dltotal, double dlnow, double ultotal, double ulnow);
 
   rtString url() const;
   std::vector<rtString> headers() const;
@@ -68,7 +69,9 @@ public:
   bool inQueue() const;
   bool delayReply() const;
 
-private:
+protected:
+  virtual void onDownloadCompleteImpl(rtFileDownloadRequest* downloadRequest);
+  virtual void onDownloadProgressImpl(double progress);
   rtEmitRef mEmit;
   rtString mUrl;
   std::vector<rtString> mHeaders;
@@ -79,6 +82,8 @@ private:
   bool mCompress;
   rtString mProxy;
   bool mDelayReply;
+  rtFileDownloadRequest* mDownloadRequest;
+  uint32_t mTimeout;
 };
 
 #endif //RT_HTTP_REQUEST_H

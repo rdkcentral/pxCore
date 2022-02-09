@@ -46,6 +46,8 @@ rtHttpRequest::rtHttpRequest(const rtString& url)
   , mCompress(true)
   , mProxy()
   , mDelayReply(false)
+  , mDownloadRequest(nullptr)
+  , mTimeout(30)	
 {
 }
 
@@ -57,6 +59,8 @@ rtHttpRequest::rtHttpRequest(const rtObjectRef& options)
   , mCompress(true)
   , mProxy()
   , mDelayReply(false)
+  , mDownloadRequest(nullptr)
+  , mTimeout(30)
 {
   rtString url;
 
@@ -80,8 +84,14 @@ rtHttpRequest::rtHttpRequest(const rtObjectRef& options)
   if (e == RT_OK)
     v.tryConvert<bool>(mDelayReply);
 
-  url.append(proto.cString());
-  url.append("//");
+  if (!proto.isEmpty())
+  {	  
+    url.append(proto.cString());
+  }
+  if (!url.isEmpty())
+  {	  
+    url.append("//");
+  }
   if (!host.isEmpty()) {
     url.append(host.cString());
   } else if (!hostname.isEmpty()) {
@@ -115,6 +125,7 @@ rtHttpRequest::rtHttpRequest(const rtObjectRef& options)
 
 rtHttpRequest::~rtHttpRequest()
 {
+  mDownloadRequest = nullptr;
   if (mWriteData)
     free(mWriteData);
 }
@@ -142,6 +153,10 @@ rtError rtHttpRequest::removeAllListenersByName(const rtString& eventName)
 rtError rtHttpRequest::abort() const
 {
   // TODO
+  if (mDownloadRequest)
+  {
+      mDownloadRequest->cancelRequest();
+  }	 
   return RT_OK;
 }
 
@@ -153,10 +168,14 @@ rtError rtHttpRequest::end()
   }
 
   rtFileDownloadRequest* req = new rtFileDownloadRequest(mUrl.cString(), this, rtHttpRequest::onDownloadCompleteAndRelease);
+  mDownloadRequest = req;
   req->setAdditionalHttpHeaders(mHeaders);
   req->setMethod(mMethod);
   req->setReadData(mWriteData, mWriteDataSize);
   req->setUseEncoding(mCompress);
+  req->setProgressMeter(false);
+  req->setProgressCallback(rtHttpRequest::onDownloadProgressCallbackFunction, this);
+  req->setCurlDefaultTimeout(mTimeout);
   if (!mProxy.isEmpty())
   {
     req->setProxy(mProxy);
@@ -224,6 +243,11 @@ rtError rtHttpRequest::setTimeout(int32_t msecs, const rtFunctionRef& f)
   }
 
   // TODO
+  mTimeout = msecs/1000;
+  if (mDownloadRequest)
+  {
+      mDownloadRequest->setCurlDefaultTimeout(mTimeout);
+  }	  
   UNUSED_PARAM(msecs);
   UNUSED_PARAM(f);
   return RT_OK;
@@ -301,7 +325,11 @@ void rtHttpRequest::onDownloadComplete(void* context, void* data)
   req->Release();
 }
 
-void rtHttpRequest::onDownloadComplete(rtFileDownloadRequest* downloadRequest)
+void rtHttpRequest::onDownloadProgressImpl(double progress)
+{
+}
+
+void rtHttpRequest::onDownloadCompleteImpl(rtFileDownloadRequest* downloadRequest)
 {
   rtHttpRequest* req = (rtHttpRequest*)downloadRequest->callbackData();
 
@@ -319,7 +347,23 @@ void rtHttpRequest::onDownloadComplete(rtFileDownloadRequest* downloadRequest)
     resp->onData();
     resp->onEnd();
   } else {
-    req->mEmit.send("error", downloadRequest->errorString());
+    if (downloadRequest->downloadStatusCode() == 28)
+    {
+      req->mEmit.send("error", "TIMEDOUT");
+    }
+    else
+    {	  
+      req->mEmit.send("error", downloadRequest->errorString());
+    }
+  }
+}
+
+void rtHttpRequest::onDownloadComplete(rtFileDownloadRequest* downloadRequest)
+{
+  rtHttpRequest* req = (rtHttpRequest*)downloadRequest->callbackData();
+  if (req != NULL)
+  {
+    req->onDownloadCompleteImpl(downloadRequest);
   }
 }
 
@@ -341,11 +385,21 @@ void rtHttpRequest::onDownloadCompleteAndRelease(rtFileDownloadRequest* download
       gUIThreadQueue->addTask(onDownloadComplete, req, resp);
     }
   }
-  else if (req != NULL)
+  else if (req != NULL && (!downloadRequest->isCanceled()))
   {
     onDownloadComplete(downloadRequest);
     req->Release();
   }
+}
+
+int rtHttpRequest::onDownloadProgressCallbackFunction(void* ptr, double dltotal, double dlnow, double ultotal, double ulnow)
+{
+    rtHttpRequest* req = (rtHttpRequest*)ptr;
+    if (req)
+    {	    
+        req->onDownloadProgressImpl(dlnow);
+    }
+    return 0;
 }
 
 rtString rtHttpRequest::url() const
