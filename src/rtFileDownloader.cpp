@@ -1,4 +1,21 @@
 /*
+ * Copyright 2021 Comcast Cable Communications Management, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/*
 
  pxCore Copyright 2005-2018 John Robinson
 
@@ -188,7 +205,7 @@ rtFileDownloadRequest::rtFileDownloadRequest(const char* imageUrl, void* callbac
     , mCacheEnabled(true), mDeferCacheRead(false), mCachedFileReadSize(0)
 #endif
     , mIsDataInCache(false)
-    , mIsProgressMeterSwitchOff(false), mHTTPFailOnError(false), mDefaultTimeout(false), mConnectionTimeout(0)
+    , mIsProgressMeterSwitchOff(false), mHTTPFailOnError(false), mDefaultTimeout(0), mConnectionTimeout(0)
     , mCORS(), mCanceled(false), mUseCallbackDataSize(false), mCanceledMutex()
     , mMethod()
     , mReadData(NULL)
@@ -499,14 +516,19 @@ char* rtFileDownloadRequest::httpErrorBuffer(void)
   return mHttpErrorBuffer;
 }
 
-void rtFileDownloadRequest::setCurlDefaultTimeout(bool val)
+void rtFileDownloadRequest::setCurlDefaultTimeout(uint32_t val)
 {
   mDefaultTimeout = val;
 }
 
-bool rtFileDownloadRequest::isCurlDefaultTimeoutSet()
+uint32_t rtFileDownloadRequest::getCurlDefaultTimeout()
 {
   return mDefaultTimeout;
+}
+
+bool rtFileDownloadRequest::isCurlDefaultTimeoutSet()
+{
+  return mDefaultTimeout>0;
 }
 
 void rtFileDownloadRequest::setConnectionTimeout(long val)
@@ -1020,6 +1042,10 @@ bool rtFileDownloader::downloadByteRangeFromNetwork(rtFileDownloadRequest* downl
    {
       curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, kCurlTimeoutInSeconds);
    }
+   else
+   {
+      curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, downloadRequest->getCurlDefaultTimeout());
+   } 
    if(downloadRequest->getConnectionTimeout() != 0)
    {
       curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, downloadRequest->getConnectionTimeout());
