@@ -559,7 +559,7 @@ rtError jsObjectWrapper::getAllKeys(rtValue* value) const
   return RT_OK;
 }
 
-rtError jsObjectWrapper::Get(const char* name, rtValue* value) const
+rtError jsObjectWrapper::Get(const char* name, rtValue* value, rtValue* session) const
 {
   if (!name)
     return RT_ERROR_INVALID_ARG;
@@ -642,7 +642,7 @@ rtError jsObjectWrapper::Get(uint32_t i, rtValue* value) const
   return RT_OK;
 }
 
-rtError jsObjectWrapper::Set(const char* name, const rtValue* value)
+rtError jsObjectWrapper::Set(const char* name, const rtValue* value, rtValue* session)
 {
   // unsupported yet
   assert(0);

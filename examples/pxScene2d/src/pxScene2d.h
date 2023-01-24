@@ -1252,9 +1252,9 @@ class pxScene2dRef: public rtRef<pxScene2d>, public rtObjectBase
   pxScene2dRef& operator=(pxScene2d* s) { asn(s); return *this; }
   
  private:
-  virtual rtError Get(const char* name, rtValue* value) const override;
+  virtual rtError Get(const char* name, rtValue* value, rtValue* session=nullptr) const override;
   virtual rtError Get(uint32_t i, rtValue* value) const override;
-  virtual rtError Set(const char* name, const rtValue* value) override;
+  virtual rtError Set(const char* name, const rtValue* value, rtValue* session=nullptr) override;
   virtual rtError Set(uint32_t i, const rtValue* value) override;
 };
 

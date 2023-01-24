@@ -258,7 +258,7 @@ public:
     return RT_ERROR_NOT_IMPLEMENTED;
   }
 
-  virtual rtError Set(const char* name, const rtValue* value) override
+  virtual rtError Set(const char* name, const rtValue* value, rtValue* session=nullptr) override
   {
 	  //rtLogDebug("pxTextBox Set for %s\n", name );
 

@@ -94,7 +94,7 @@ public:
   rtError uniforms(rtObjectRef& o) const;
   rtError setUniforms(rtObjectRef o);
 
-  virtual rtError Set(const char* name, const rtValue* value);
+  virtual rtError Set(const char* name, const rtValue* value, rtValue* session=nullptr);
 
   UniformType_t getUniformType(rtString &name);
 

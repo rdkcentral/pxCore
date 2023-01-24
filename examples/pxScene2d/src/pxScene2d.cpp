@@ -2892,7 +2892,7 @@ rtDefineMethod(pxScene2d, addServiceProvider);
 rtDefineMethod(pxScene2d, removeServiceProvider);
 rtDefineProperty(pxScene2d, storage);
 
-rtError pxScene2dRef::Get(const char* name, rtValue* value) const
+rtError pxScene2dRef::Get(const char* name, rtValue* value, rtValue* session) const
 {
   return (*this)->Get(name, value);
 }
@@ -2902,7 +2902,7 @@ rtError pxScene2dRef::Get(uint32_t i, rtValue* value) const
   return (*this)->Get(i, value);
 }
 
-rtError pxScene2dRef::Set(const char* name, const rtValue* value)
+rtError pxScene2dRef::Set(const char* name, const rtValue* value, rtValue* session)
 {
   return (*this)->Set(name, value);
 }

@@ -48,9 +48,9 @@ class rtIObject
 
     virtual rtMethodMap* getMap() const = 0;
     
-    virtual rtError Get(const char* name, rtValue* value) const = 0;
+    virtual rtError Get(const char* name, rtValue* value, rtValue *session = nullptr) const = 0;
     virtual rtError Get(uint32_t i, rtValue* value) const = 0;
-    virtual rtError Set(const char* name, const rtValue* value) = 0;
+    virtual rtError Set(const char* name, const rtValue* value, rtValue *session = nullptr) = 0;
     virtual rtError Set(uint32_t i, const rtValue* value) = 0;
 };
 
@@ -73,7 +73,7 @@ class rtObjectBase
 public:
 
   template<typename T>
-    rtError get(const char* name, T& value) const;
+    rtError get(const char* name, T& value, uint32_t session=0) const;
   template<typename T>
     T get(const char* name) const;
   template<typename T>
@@ -84,8 +84,8 @@ public:
   // Enumerate the properties of o and set them on this object
   void set(rtObjectRef o);
 
-  finline rtError set(const char* name, const rtValue& value) 
-    {return Set(name, &value);}
+  finline rtError set(const char* name, const rtValue& value, uint32_t session=0) 
+    {rtValue sess; sess.assign<uint32_t>(session);return Set(name, &value, &sess);}
   // For array-like properties
   finline rtError set(uint32_t i, const rtValue& value) 
     {return Set(i, &value);}
@@ -163,9 +163,9 @@ public:
                       rtValue& result); 
 
  private:
-  virtual rtError Get(const char* name, rtValue* value) const = 0;
+  virtual rtError Get(const char* name, rtValue* value, rtValue* session=nullptr) const = 0;
   virtual rtError Get(uint32_t i, rtValue* value) const = 0;
-  virtual rtError Set(const char* name, const rtValue* value) = 0;
+  virtual rtError Set(const char* name, const rtValue* value, rtValue* session=nullptr) = 0;
   virtual rtError Set(uint32_t i, const rtValue* value) = 0;
 };
 
@@ -247,9 +247,9 @@ class rtObjectRef: public rtRef<rtIObject>, public rtObjectBase
   virtual ~rtObjectRef() {}
 
  private:
-  virtual rtError Get(const char* name, rtValue* value) const;
+  virtual rtError Get(const char* name, rtValue* value, rtValue* session=nullptr) const;
   virtual rtError Get(uint32_t i, rtValue* value) const;
-  virtual rtError Set(const char* name, const rtValue* value);
+  virtual rtError Set(const char* name, const rtValue* value, rtValue* session=nullptr);
   virtual rtError Set(uint32_t i, const rtValue* value);
 };
 
@@ -333,9 +333,9 @@ public:
   rtError allKeys(rtObjectRef& v) const;
 
   virtual rtError Get(uint32_t /*i*/, rtValue* /*value*/) const;
-  virtual rtError Get(const char* name, rtValue* value) const;
+  virtual rtError Get(const char* name, rtValue* value, rtValue* session=nullptr) const;
   virtual rtError Set(uint32_t i, const rtValue* value);
-  virtual rtError Set(const char* name, const rtValue* value);
+  virtual rtError Set(const char* name, const rtValue* value, rtValue* session=nullptr);
 
 protected:
   bool mInitialized;
@@ -352,10 +352,13 @@ rtError rtAlloc(const char* objectName, rtObjectRef& object);
 // TODO move out to another file
 
 template<typename T>
-rtError rtObjectBase::get(const char* name, T& value) const
+rtError rtObjectBase::get(const char* name, T& value, uint32_t session) const
 {
   rtValue v;
-  rtError e = Get(name, &v);
+  rtValue s;
+  s.assign<uint32_t>(session);
+
+  rtError e = Get(name, &v, &s);
   if (e == RT_OK) 
   {
     e = v.tryConvert<T>(value);
@@ -738,9 +741,9 @@ public:
   void empty();
   void pushBack(rtValue v);
 
-  virtual rtError Get(const char* name, rtValue* value) const;
+  virtual rtError Get(const char* name, rtValue* value, rtValue* session=nullptr) const;
   virtual rtError Get(uint32_t i, rtValue* value) const;
-  virtual rtError Set(const char* /*name*/, const rtValue* /*value*/);
+  virtual rtError Set(const char* /*name*/, const rtValue* /*value*/, rtValue* /*session=nullptr*/);
   virtual rtError Set(uint32_t i, const rtValue* value);
 
   uint32_t length() const
@@ -767,9 +770,9 @@ class rtMapObject: public rtObject
 public:
   rtDeclareObject(rtMapObject, rtObject);
   
-  virtual rtError Get(const char* name, rtValue* value) const;
+  virtual rtError Get(const char* name, rtValue* value, rtValue* session=nullptr) const;
   virtual rtError Get(uint32_t /*i*/, rtValue* /*value*/) const;
-  virtual rtError Set(const char* name, const rtValue* value);
+  virtual rtError Set(const char* name, const rtValue* value, rtValue* session=nullptr);
   virtual rtError Set(uint32_t /*i*/, const rtValue* /*value*/);
 
   rtError copyTo(rtMapObject* dst);

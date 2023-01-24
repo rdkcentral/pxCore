@@ -429,7 +429,7 @@ rtError jsObjectWrapper::getAllKeys(Isolate* isolate, rtValue* value) const
   return RT_OK;
 }
 
-rtError jsObjectWrapper::Get(const char* name, rtValue* value) const
+rtError jsObjectWrapper::Get(const char* name, rtValue* value, rtValue* session=nullptr) const
 {
   Locker locker(mIsolate);
   Isolate::Scope   isolate_scope(mIsolate);
@@ -524,7 +524,7 @@ rtError jsObjectWrapper::Get(uint32_t i, rtValue* value) const
   return RT_OK;
 }
 
-rtError jsObjectWrapper::Set(const char* name, const rtValue* value)
+rtError jsObjectWrapper::Set(const char* name, const rtValue* value, rtValue* session=nullptr)
 {
   if (!name)
     return RT_ERROR_INVALID_ARG;

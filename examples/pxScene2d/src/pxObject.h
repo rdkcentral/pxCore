@@ -150,7 +150,7 @@ public:
   }
 
   virtual rtError Set(uint32_t i, const rtValue* value) override;
-  virtual rtError Set(const char* name, const rtValue* value) override;
+  virtual rtError Set(const char* name, const rtValue* value, rtValue* session=nullptr) override;
 
   rtError getChild(uint32_t i, rtObjectRef& r) const
   {

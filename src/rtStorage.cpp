@@ -539,7 +539,7 @@ bool rtStorage::isEncrypted(const char* fileName)
   return !eq;
 }
 
-rtError rtStorage::Get(const char* name, rtValue* value) const
+rtError rtStorage::Get(const char* name, rtValue* value, rtValue* session) const
 {
   if (!value)
     return RT_FAIL;
@@ -566,7 +566,7 @@ rtError rtStorage::Get(uint32_t /*i*/, rtValue* /*value*/) const
   return RT_PROP_NOT_FOUND;
 }
 
-rtError rtStorage::Set(const char* name, const rtValue* value)
+rtError rtStorage::Set(const char* name, const rtValue* value, rtValue* session)
 {
   if (!value)
     return RT_ERROR_INVALID_ARG;

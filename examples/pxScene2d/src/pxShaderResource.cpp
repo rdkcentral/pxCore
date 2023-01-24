@@ -219,7 +219,7 @@ rtError pxShaderResource::setUniformVals(const rtValue& v)
   return RT_OK;
 }
 
-rtError pxShaderResource::Set(const char* name, const rtValue* value)
+rtError pxShaderResource::Set(const char* name, const rtValue* value, rtValue* session)
 {
   // Only have EXPLICIT supported Properties ... otherwise its a UNIFORM
   //

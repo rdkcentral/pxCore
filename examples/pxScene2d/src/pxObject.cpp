@@ -247,7 +247,7 @@ rtError pxObject::Set(uint32_t i, const rtValue* value)
   return RT_ERROR_NOT_IMPLEMENTED;
 }
 
-rtError pxObject::Set(const char* name, const rtValue* value)
+rtError pxObject::Set(const char* name, const rtValue* value, rtValue* session)
 {
   markDirty();
 

@@ -324,7 +324,7 @@ void rtArrayObject::pushBack(rtValue v)
   mElements.push_back(v);
 }
 
-rtError rtArrayObject::Get(const char* name, rtValue* value) const
+rtError rtArrayObject::Get(const char* name, rtValue* value, rtValue* session) const
 {
   if (!value) 
     return RT_FAIL;
@@ -350,7 +350,7 @@ rtError rtArrayObject::Get(uint32_t i, rtValue* value) const
     return RT_PROP_NOT_FOUND;
 }
 
-rtError rtArrayObject::Set(const char* /*name*/,const rtValue* /*value*/)
+rtError rtArrayObject::Set(const char* /*name*/,const rtValue* /*value*/, rtValue* /*session*/)
 {
   return RT_PROP_NOT_FOUND;
 }
@@ -381,7 +381,7 @@ vector<rtNamedValue>::iterator rtMapObject::find(const char* name)
   return it;
 }
 
-rtError rtMapObject::Get(const char* name, rtValue* value) const
+rtError rtMapObject::Get(const char* name, rtValue* value, rtValue* session) const
 {
   if (!value) 
     return RT_FAIL;
@@ -398,7 +398,7 @@ rtError rtMapObject::Get(const char* name, rtValue* value) const
   {
     // TODO UGH... need to rework these meta properties
     // change decription to a property and probably put a prefix on it
-    return rtObject::Get(name, value);
+    return rtObject::Get(name, value, session);
   }
   else if (!strcmp(name, "allKeys"))
   {
@@ -417,7 +417,7 @@ rtError rtMapObject::Get(const char* name, rtValue* value) const
   return RT_PROP_NOT_FOUND;
 }
 
-rtError rtMapObject::Set(const char* name, const rtValue* value)
+rtError rtMapObject::Set(const char* name, const rtValue* value, rtValue* session)
 {
   if (!value) 
     return RT_FAIL;
@@ -486,7 +486,7 @@ rtError rtObject::Get(uint32_t /*i*/, rtValue* /*value*/) const
   return RT_PROP_NOT_FOUND;
 }
 
-rtError rtObject::Get(const char* name, rtValue* value) const
+rtError rtObject::Get(const char* name, rtValue* value, rtValue* session) const
 {
   rtError hr = RT_PROP_NOT_FOUND;
   rtMethodMap* m = getMap();
@@ -499,7 +499,12 @@ rtError rtObject::Get(const char* name, rtValue* value) const
       if (strcmp(name, e->mPropertyName) == 0) 
       {
         rtGetPropertyThunk t = e->mGetThunk;
-        hr = (*this.*t)(*value);
+        if(session != nullptr)
+            hr = (*this.*t)(*value, *session);
+        else {
+            rtValue s = rtValue(0);
+            hr = (*this.*t)(*value, s);
+        }
         return hr;
       }
       e = e->mNext;
@@ -540,7 +545,7 @@ rtError rtObject::Set(uint32_t /*i*/, const rtValue* /*value*/)
   return RT_PROP_NOT_FOUND;
 }
 
-rtError rtObject::Set(const char* name, const rtValue* value) 
+rtError rtObject::Set(const char* name, const rtValue* value, rtValue* session) 
 {
   rtError hr = RT_PROP_NOT_FOUND;
   
@@ -557,7 +562,13 @@ rtError rtObject::Set(const char* name, const rtValue* value)
         if (e->mSetThunk) 
         {
           rtSetPropertyThunk t = e->mSetThunk;
-          hr = (*this.*t)(*value);
+          if(session != nullptr)
+            hr = (*this.*t)(*value, *session);
+          else
+          {
+            rtValue s = rtValue(0);
+            hr = (*this.*t)(*value, s);
+          }
         }
         else
         {
@@ -721,9 +732,9 @@ rtError rtFunctionBase::SendAsync(int numArgs, const rtValue* args)
   return RT_OK;
 }
 
-rtError rtObjectRef::Get(const char* name, rtValue* value) const
+rtError rtObjectRef::Get(const char* name, rtValue* value, rtValue* session) const
 {
-  return (*this)->Get(name, value);
+  return (*this)->Get(name, value, session);
 }
  
 rtError rtObjectRef::Get(uint32_t i, rtValue* value) const
@@ -731,9 +742,9 @@ rtError rtObjectRef::Get(uint32_t i, rtValue* value) const
   return (*this)->Get(i, value);
 }
  
-rtError rtObjectRef::Set(const char* name, const rtValue* value) 
+rtError rtObjectRef::Set(const char* name, const rtValue* value, rtValue* session) 
 {
-  return (*this)->Set(name, value);
+  return (*this)->Set(name, value, session);
 }
 
 rtError rtObjectRef::Set(uint32_t i, const rtValue* value) 
