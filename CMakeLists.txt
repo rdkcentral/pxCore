@@ -3,6 +3,7 @@ project(rtCore)
 
 option(ENABLE_THREAD_SANITIZER "ENABLE_THREAD_SANITIZER" OFF)
 option(ENABLE_ADDRESS_SANITIZER "ENABLE_ADDRESS_SANITIZER" OFF)
+option(PREFER_SYSTEM_LIBRARIES "Prefer to use system libraries over bundled." "OFF")
 
 if (ENABLE_THREAD_SANITIZER)
     message("Enabling thread sanitizer")
