@@ -1,4 +1,21 @@
 /*
+ * Copyright 2021 Comcast Cable Communications Management, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/*
 
  pxCore Copyright 2005-2018 John Robinson
 
@@ -59,6 +76,7 @@ public:
   static void onDownloadComplete(rtFileDownloadRequest* downloadRequest);
   static void onDownloadCompleteAndRelease(rtFileDownloadRequest* downloadRequest);
   static void onDownloadComplete(void* context, void* data);
+  static int onDownloadProgressCallbackFunction(void* ptr, double dltotal, double dlnow, double ultotal, double ulnow);
 
   rtString url() const;
   std::vector<rtString> headers() const;
@@ -68,7 +86,9 @@ public:
   bool inQueue() const;
   bool delayReply() const;
 
-private:
+protected:
+  virtual void onDownloadCompleteImpl(rtFileDownloadRequest* downloadRequest);
+  virtual void onDownloadProgressImpl(double progress);
   rtEmitRef mEmit;
   rtString mUrl;
   std::vector<rtString> mHeaders;
@@ -79,6 +99,8 @@ private:
   bool mCompress;
   rtString mProxy;
   bool mDelayReply;
+  rtFileDownloadRequest* mDownloadRequest;
+  uint32_t mTimeout;
 };
 
 #endif //RT_HTTP_REQUEST_H
