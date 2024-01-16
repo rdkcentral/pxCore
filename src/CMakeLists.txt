@@ -62,12 +62,12 @@ set(RTCORE_FILES utf8.c rtString.cpp rtLog.cpp rtValue.cpp rtError.cpp ioapi_mem
 set(RTCORE_PLATFORM_FILES "")
 
 if (APPLE)
-    set(RTCORE_EXT_PLATFORM_FILES "mac/pxTimerNative.mm")
+    set(RTCORE_PLATFORM_FILES "mac/pxTimerNative.mm")
 else ()
-    set(RTCORE_EXT_PLATFORM_FILES "gles/pxTimerNative.cpp")
+    set(RTCORE_PLATFORM_FILES "gles/pxTimerNative.cpp")
 endif (APPLE)
 
-set(RTCORE_EXT_FILES ${RTCORE_FILES}  rtFileCache.cpp rtHttpRequest.cpp   rtHttpResponse.cpp  rtThreadQueue.cpp  unix/rtThreadPoolNative.cpp rtFileDownloader.cpp unix/rtMutexNative.cpp rtThreadTask.cpp rtHttpCache.cpp rtThreadPool.cpp rtUrlUtils.cpp rtFile.cpp rtSettings.cpp rtJsonUtils.cpp rtPathUtils.cpp rtCORS.cpp ${RTCORE_PLATFORM_FILES}
+set(RTCORE_FILES ${RTCORE_FILES}  rtFileCache.cpp rtHttpRequest.cpp   rtHttpResponse.cpp  rtThreadQueue.cpp  unix/rtThreadPoolNative.cpp rtFileDownloader.cpp unix/rtMutexNative.cpp rtThreadTask.cpp rtHttpCache.cpp rtThreadPool.cpp rtUrlUtils.cpp rtFile.cpp rtSettings.cpp rtJsonUtils.cpp rtPathUtils.cpp rtCORS.cpp ${RTCORE_PLATFORM_FILES}
        )
 
 include_directories(AFTER ${EXTDIR})
@@ -75,5 +75,6 @@ include_directories(AFTER ${EXTDIR})
 message("Building rtcore libs")
 add_library(rtCore_s ${RTCORE_FILES})
 add_library(rtCore SHARED ${RTCORE_FILES})
-set(RTCORE_EXT_LINK_LIBRARIES "curl")
-set(RTCORE_EXT_LINK_LIBRARIES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../extlibs/lib)
+set(RTCORE_LINK_LIBRARIES "curl")
+set(RTCORE_LINK_LIBRARIES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../extlibs/lib)
+target_link_libraries(rtCore -L${RTCORE_LINK_LIBRARIES_PATH} ${RTCORE_LINK_LIBRARIES})
