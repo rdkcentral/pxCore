@@ -19,8 +19,6 @@
 // rtFileCache.cpp
 
 #include <rtFileCache.h>
-//#include <pxOffscreen.h>
-//#include <pxUtil.h>
 #include <string.h>
 #include <sstream>
 #include <dirent.h>
