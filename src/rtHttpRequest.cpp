@@ -38,11 +38,7 @@
 #include "rtHttpResponse.h"
 #include "rtThreadQueue.h"
 
-#ifdef BUILDING_FOR_EXT
 rtThreadQueue* gUIThreadQueue = NULL;
-#else
-extern rtThreadQueue* gUIThreadQueue;
-#endif
 
 rtDefineObject(rtHttpRequest, rtObject);
 

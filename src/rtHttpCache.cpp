@@ -607,7 +607,7 @@ rtError rtHttpCacheData::performHeaderRevalidation()
 
 rtError rtHttpCacheData::handleEtag(rtData& data)
 {
-  #ifdef PX_ETAG_AVOID_NONSTALE
+  #ifdef RTCORE_ETAG_AVOID_NONSTALE
   if (isExpired())
   {
   #endif
@@ -630,7 +630,7 @@ rtError rtHttpCacheData::handleEtag(rtData& data)
       data.init(mData.data(),mData.length());
       fclose(fp);
     }
-  #ifdef PX_ETAG_AVOID_NONSTALE
+  #ifdef RTCORE_ETAG_AVOID_NONSTALE
   }
   #endif
   return RT_OK;
