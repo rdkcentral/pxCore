@@ -718,7 +718,7 @@ rtFileDownloader::rtFileDownloader()
   {
     rtLogError("curl global init failed (error code: %d)", rv);
   }
-#ifdef PX_REUSE_DOWNLOAD_HANDLES
+#ifdef RTCORE_REUSE_DOWNLOAD_HANDLES
   downloadHandleMutex.lock();
   int numberOfDownloadHandles = rtThreadPool::globalInstance()->numberOfThreadsInPool();
   rtLogWarn("enabling curl handle reuse with pool size of: %d", numberOfDownloadHandles);
@@ -738,7 +738,7 @@ rtFileDownloader::rtFileDownloader()
 
 rtFileDownloader::~rtFileDownloader()
 {
-#ifdef PX_REUSE_DOWNLOAD_HANDLES
+#ifdef RTCORE_REUSE_DOWNLOAD_HANDLES
   downloadHandleMutex.lock();
   for (vector<rtFileDownloadHandle>::iterator it = mDownloadHandles.begin(); it != mDownloadHandles.end(); )
   {
@@ -778,9 +778,9 @@ rtFileDownloader* rtFileDownloader::instance()
         signal(SIGPIPE, SIG_IGN);
 #endif //!WIN32
         mInstance = new rtFileDownloader();
-#ifdef PX_REUSE_DOWNLOAD_HANDLES
+#ifdef RTCORE_REUSE_DOWNLOAD_HANDLES
       downloadHandleExpiresCheckThread = new std::thread(onDownloadHandleCheck);
-#endif //PX_REUSE_DOWNLOAD_HANDLES
+#endif //RTCORE_REUSE_DOWNLOAD_HANDLES
     }
     return mInstance;
 }
@@ -1785,7 +1785,7 @@ void rtFileDownloader::setDefaultCallbackFunction(void (*callbackFunction)(rtFil
 CURL* rtFileDownloader::retrieveDownloadHandle(rtString& origin)
 {
   CURL* curlHandle = NULL;
-#ifdef PX_REUSE_DOWNLOAD_HANDLES
+#ifdef RTCORE_REUSE_DOWNLOAD_HANDLES
   downloadHandleMutex.lock();
   if (!mReuseDownloadHandles || mDownloadHandles.empty())
   {
@@ -1817,7 +1817,7 @@ CURL* rtFileDownloader::retrieveDownloadHandle(rtString& origin)
   downloadHandleMutex.unlock();
 #else
   curlHandle = curl_easy_init();
-#endif //PX_REUSE_DOWNLOAD_HANDLES
+#endif //RTCORE_REUSE_DOWNLOAD_HANDLES
   if (curlHandle == NULL)
   {
     curlHandle = curl_easy_init();
@@ -1828,7 +1828,7 @@ CURL* rtFileDownloader::retrieveDownloadHandle(rtString& origin)
 void rtFileDownloader::releaseDownloadHandle(CURL* curlHandle, double expiresTime, rtString& origin)
 {
   rtLogDebug("expires time: %f", expiresTime);
-#ifdef PX_REUSE_DOWNLOAD_HANDLES
+#ifdef RTCORE_REUSE_DOWNLOAD_HANDLES
     downloadHandleMutex.lock();
     static int numberOfDownloadHandles = rtThreadPool::globalInstance()->numberOfThreadsInPool();
     if(!mReuseDownloadHandles || mDownloadHandles.size() >= numberOfDownloadHandles || (expiresTime == 0))
@@ -1846,7 +1846,7 @@ void rtFileDownloader::releaseDownloadHandle(CURL* curlHandle, double expiresTim
     downloadHandleMutex.unlock();
 #else
     curl_easy_cleanup(curlHandle);
-#endif //PX_REUSE_DOWNLOAD_HANDLES
+#endif //RTCORE_REUSE_DOWNLOAD_HANDLES
 }
 
 void rtFileDownloader::addFileDownloadRequest(rtFileDownloadRequest* downloadRequest)
