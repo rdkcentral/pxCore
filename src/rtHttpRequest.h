@@ -40,6 +40,24 @@
 #include "rtString.h"
 #include "rtFileDownloader.h"
 
+struct NetworkMetrics
+{
+  rtString url;
+  rtString method;
+  std::vector<rtString> headers;
+  long statusCode;
+  std::map<rtString, rtValue> timeMetricsData;
+
+};
+
+class NetworkMetricsListener 
+{
+  private:
+    NetworkMetrics mNetworkMetrics;
+  public:
+    virtual void onMetricsData(NetworkMetrics *net)=0;
+};
+
 class rtHttpRequest : public rtObject
 {
 public:
@@ -77,6 +95,8 @@ public:
   static void onDownloadCompleteAndRelease(rtFileDownloadRequest* downloadRequest);
   static void onDownloadComplete(void* context, void* data);
   static int onDownloadProgressCallbackFunction(void* ptr, double dltotal, double dlnow, double ultotal, double ulnow);
+ 
+  void setNetworkMetricsListener(NetworkMetricsListener* listener);
 
   rtString url() const;
   std::vector<rtString> headers() const;
@@ -101,6 +121,7 @@ protected:
   bool mDelayReply;
   rtFileDownloadRequest* mDownloadRequest;
   uint32_t mTimeout;
+  NetworkMetricsListener* mMetricsListener;
 };
 
 #endif //RT_HTTP_REQUEST_H

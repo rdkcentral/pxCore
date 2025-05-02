@@ -64,7 +64,8 @@ rtHttpRequest::rtHttpRequest(const rtString& url)
   , mProxy()
   , mDelayReply(false)
   , mDownloadRequest(nullptr)
-  , mTimeout(30)	
+  , mTimeout(30)
+  , mMetricsListener(nullptr)
 {
 }
 
@@ -78,6 +79,7 @@ rtHttpRequest::rtHttpRequest(const rtObjectRef& options)
   , mDelayReply(false)
   , mDownloadRequest(nullptr)
   , mTimeout(30)
+  , mMetricsListener(nullptr)
 {
   rtString url;
 
@@ -338,6 +340,11 @@ void rtHttpRequest::onDownloadComplete(void* context, void* data)
   }
 
   req->Release();
+}
+
+void rtHttpRequest::setNetworkMetricsListener(NetworkMetricsListener* listener)
+{
+  mMetricsListener = listener;
 }
 
 void rtHttpRequest::onDownloadProgressImpl(double progress)
