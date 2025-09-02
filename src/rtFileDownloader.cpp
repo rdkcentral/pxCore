@@ -1531,6 +1531,12 @@ bool rtFileDownloader::downloadFromNetwork(rtFileDownloadRequest* downloadReques
     curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1); //when redirected, follow the redirections
     curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, HeaderCallback);
     curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, (void *)&chunk);
+    
+    if (strcmp(method.cString(), "HEAD") == 0)
+    {
+       headerOnly = true;
+    }
+
     if (false == headerOnly)
     {
       chunk.downloadRequest = downloadRequest;
